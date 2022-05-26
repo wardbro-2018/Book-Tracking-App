@@ -1,7 +1,8 @@
 import React from 'react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import BookShelf from './BookShelf'
 import * as BooksAPI from './BooksAPI'
+import debounce from 'lodash.debounce';
 
 
 
@@ -13,8 +14,20 @@ function SearchBooks(props) {
     const [searchTerm, setSearchTerm] = useState('');
     const [SearchResult, setSearchResult] = useState([]);
     // const [BooksOnShelves, setBooksOnShelves]
+
+    const search = useCallback(
+        debounce(searchTerm => {
+            if (searchTerm === "") {
+                setSearchResult([])
+            }
+            else {
+                BooksAPI.search(searchTerm).then(x => Array.isArray(x) ? (setSearchResult(x)) : (setSearchResult([])))
+            }
+        }, 500),
+        [], // will be created only once initially
+    );
     useEffect(() => {
-        searchTerm && BooksAPI.search(searchTerm).then(x => Array.isArray(x) ? (setSearchResult(x)) : (setSearchResult([])))
+        search(searchTerm)
     }, [searchTerm])
 
     return (
@@ -35,7 +48,7 @@ function SearchBooks(props) {
                 </div>
             </div>
             <div className="search-books-results">
-                <BookShelf updateBookList={props.updateBookList} title='Search Results' Books={SearchResult.map(x=>props.BookList.find(b=>b.id == x.id) || x)} />
+                <BookShelf updateBookList={props.updateBookList} title='Search Results' Books={SearchResult.map(x => props.BookList.find(b => b.id == x.id) || x)} />
             </div>
         </div>
     )
